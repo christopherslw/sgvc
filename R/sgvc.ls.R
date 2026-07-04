@@ -1,9 +1,12 @@
 # fit the spectral graph varying coefficient model
 # returns the fitted values and the coefficient functions
 # fit obtained by qr rather than the normal equations, which is more robust when an eigenvector is nearly colinear with a covariate
+# need to fix
 
-sgvc.ls <- function(X, y, L, train, nb)
-{
+sgvc.ls <- function(X, y, L, train, nb){
+  if(is.null(train)){
+    train = 1:length(y)
+  }
   p = ncol(X)
   Phi = graph_basis(L, nb)
   D = Phi

@@ -3,8 +3,10 @@
 # solved by ADMM with edge splitting
 # *Assumes a connected graph*
 
-network.lasso <- function(X, y, A, train, lambdas=2**seq(-3, 5), rho=1, iters=200)
-{
+network.lasso <- function(X, y, A, train, lambdas=2**seq(-3, 5), rho=1, iters=200){
+  if(is.null(train)){
+    train = 1:length(y)
+  }
   X = cbind(1, X) # varying intercept plus the slopes
   n = nrow(X)
   p = ncol(X)
@@ -63,5 +65,5 @@ network.lasso <- function(X, y, A, train, lambdas=2**seq(-3, 5), rho=1, iters=20
       fitted = yhat
     }
   }
-  list(fitted=fitted)
+  return(list(fitted=fitted))
 }

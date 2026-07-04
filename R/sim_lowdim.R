@@ -1,35 +1,33 @@
-# experiment #1
-# question of interest: do lexical features predict reaction time differently across the SWOW semantic network? 
-# each word is a node and edges represent strong human free associations 
-# response is lexical decision reaction time
+library(Matrix)
 source("R/lasso.R")
-source("R/rnc.R")
+source("R/elastic.net.R")
 source("R/graph_basis.R")
 source("R/sgvc.R")
-source("R/network.lasso.R")
+source("R/gen_data.R")
 source("R/metrics.R")
+source("R/network.lasso.R")
+source("R/rnc.R")
 
+set.seed(1) 
+n = 500
+p = 6
+s = 6  # num of true active covariates
+data = gen_data(n, p, s, graph="sbm")
+X = data$X
+y = data$y
+n = data$n
+A = data$W
 
-node = read.csv("swow/swow_elp_reaction_time_node_data.csv")
-node$z_lgsubtlwf[is.na(node$z_lgsubtlwf)] = 0   # only one missing value -> impute
-feats = c("z_length", "z_log_freq_hal", "z_lgsubtlwf", "z_ortho_n", "z_old", "z_nphon", "z_nsyll", "z_nmorph")
-X = as.matrix(node[, feats])
-y = node$y_ldt_z
-n = nrow(X)
-edge = read.csv("swow/swow_elp_reaction_time_edge_list.csv")
-A = matrix(0, n, n)
-A[cbind(edge$from, edge$to)] = edge$weight
-A[cbind(edge$to, edge$from)] = edge$weight
-
+# normalized Laplacian kept sparse
 dinv = 1/sqrt(rowSums(A))
 L = Diagonal(n)-Diagonal(x=dinv) %*%A%*% Diagonal(x=dinv)
 
-set.seed(1)
 test = sample(n, n%/%5)
 train = setdiff(1:n, test)
 
 #t_sgvc.ls = system.time(fit_sgvc.ls <- sgvc.ls(X, y, L, train))[["elapsed"]]
 t_sgvc.sparse = system.time(fit_sgvc.sparse <- sgvc(X, y, L, train))[["elapsed"]]
+t_ols = system.time(fit_ols <- ols(X, y, train))[["elapsed"]]
 t_lasso = system.time(fit_lasso <- lasso(X, y, train))[["elapsed"]]
 t_enet = system.time(fit_enet <- elastic.net(X, y, train))[["elapsed"]]
 t_netlasso = system.time(fit_netlasso <- network.lasso(X, y, A, train))[["elapsed"]]
@@ -40,22 +38,25 @@ t_rnc = system.time(fit_rnc <- rnc(X, y, L, train))[["elapsed"]]
 
 # R2,RMSE,MAE
 rbind(sgvc.sparse=metrics(y[train],fit_sgvc.sparse$fitted[train]),
+      ols=metrics(y[train],fit_ols$fitted[train]),
       lasso=metrics(y[train],fit_lasso$fitted[train]),
       enet=metrics(y[train],fit_enet$fitted[train]),
       netlasso=metrics(y[train],fit_netlasso$fitted[train]),
       rnc=metrics(y[train],fit_rnc$fitted[train])
 )
 #runtime (seconds)
-rbind(sgvc.sparse=t_sgvc.sparse,lasso=t_lasso,enet=t_enet,netlasso=t_netlasso,rnc=t_rnc)
+rbind(sgvc.sparse=t_sgvc.sparse,ols=t_ols,lasso=t_lasso,enet=t_enet,netlasso=t_netlasso,rnc=t_rnc)
 
 
 ### out of sample results
 
 # R2,RMSE,MAE
 rbind(sgvc.sparse=metrics(y[test],fit_sgvc.sparse$fitted[test]),
+      ols=metrics(y[test],fit_ols$fitted[test]),
       lasso=metrics(y[test],fit_lasso$fitted[test]),
       enet=metrics(y[test],fit_enet$fitted[test]),
       netlasso=metrics(y[test],fit_netlasso$fitted[test]),
       rnc=metrics(y[test],fit_rnc$fitted[test])
 )
+
 
