@@ -1,23 +1,7 @@
+# sparse implementation of spectral graph varying coefficient model
+# group lasso chooses between a zero, a constant, and a varying effect per feature
+# requires grpreg
 library(grpreg)
-
-# Sparse spectral graph varying-coefficient model
-#
-#   y_i = a(v_i) + sum_j X_ij * beta_j(v_i) + noise
-#   a(v) = a0 + Phi(v) w 
-#  beta_j(v) = c_j + Phi(v) d_j
-#
-# Phi holds the nb smoothest Laplacian eigenvectors (see graph_basis.R). Each
-# feature contributes two penalty groups, {c_j} and {d_j}; the group lasso sets
-# whole groups to zero, so unused features drop out entirely. lambda is chosen
-# by nfolds cross-validation.
-#
-# For large p, only the `screen` features whose group [X_j, X_j*Phi] is most
-# correlated with y enter the design (set screen = ncol(X) to disable).
-# Assumes X columns are standardized (gen_data's X is).
-#
-# Transductive: X and L include held-out nodes, only y[train] is used, and
-# `fitted` covers all nodes, so
-#   out-of-sample MSE = mean((y[-train] - fit$fitted[-train])^2)
 
 sgvc <- function(X, y, L, train=NULL, nb=10, screen=500, nfolds=5) {
   if (is.null(train)){
