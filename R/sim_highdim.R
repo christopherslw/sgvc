@@ -30,20 +30,11 @@ t_enet = system.time(fit_enet <- elastic.net(X, y, train))[["elapsed"]]
 
 
 
-### in sample results
-
-#R2,RMSE,MAE
-rbind(sgvc.sparse=metrics(y[train],fit_sgvc.sparse$fitted[train]),
-      lasso=metrics(y[train],fit_lasso$fitted[train]),
-      enet=metrics(y[train],fit_enet$fitted[train])
-)
-#runtime (seconds)
+### runtime (seconds)
 rbind(sgvc.sparse=t_sgvc,lasso=t_lasso,enet=t_enet)
 
 
-
 ### out of sample prediction and variable selection 
-
 sel_rates = function(sel, truth, p) {
   tpr = mean(truth %in% sel)
   fpr = length(setdiff(sel, truth)) / (p - length(truth))
